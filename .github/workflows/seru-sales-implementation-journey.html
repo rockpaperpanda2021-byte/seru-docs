@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Seru — Sales & Implementation Journey</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #0b0d12;
+    --bg-elev: #12151c;
+    --bg-card: #161a24;
+    --line: rgba(255,255,255,0.08);
+    --text: #eef1f7;
+    --muted: #9aa3b5;
+    --faint: #6b7385;
+    --accent: #7c9cff;
+    --accent-2: #5eead4;
+    --warn: #fbbf24;
+    --human: #f472b6;
+    --bot: #7c9cff;
+    --ok: #34d399;
+    --radius: 18px;
+    --shadow: 0 20px 50px rgba(0,0,0,0.45);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    font-family: "DM Sans", system-ui, sans-serif;
+    background:
+      radial-gradient(1200px 600px at 10% -10%, rgba(124,156,255,0.22), transparent 55%),
+      radial-gradient(900px 500px at 90% 0%, rgba(94,234,212,0.12), transparent 50%),
+      radial-gradient(800px 400px at 50% 100%, rgba(244,114,182,0.08), transparent 45%),
+      var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 48px 24px 80px; }
+  header.hero {
+    display: grid;
+    gap: 20px;
+    margin-bottom: 40px;
+    padding: 32px;
+    border: 1px solid var(--line);
+    border-radius: 28px;
+    background: linear-gradient(160deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+    box-shadow: var(--shadow);
+    position: relative;
+    overflow: hidden;
+  }
+  header.hero::after {
+    content: "";
+    position: absolute;
+    inset: auto -20% -40% 40%;
+    height: 220px;
+    background: radial-gradient(circle, rgba(124,156,255,0.25), transparent 70%);
+    pointer-events: none;
+  }
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent-2);
+    font-weight: 600;
+  }
+  .eyebrow .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--accent-2);
+    box-shadow: 0 0 12px var(--accent-2);
+  }
+  h1 {
+    margin: 0;
+    font-size: clamp(1.8rem, 4vw, 2.6rem);
+    letter-spacing: -0.03em;
+    line-height: 1.12;
+    max-width: 16ch;
+  }
+  .lede {
+    margin: 0;
+    max-width: 62ch;
+    color: var(--muted);
+    font-size: 1.05rem;
+  }
+  .meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 8px;
+  }
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: rgba(255,255,255,0.03);
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .pill strong { color: var(--text); font-weight: 600; }
+  .legend {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+    margin: 28px 0 36px;
+  }
+  .legend-card {
+    padding: 16px 18px;
+    border-radius: 16px;
+    border: 1px solid var(--line);
+    background: var(--bg-elev);
+  }
+  .legend-card h3 {
+    margin: 0 0 6px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .legend-card p { margin: 0; font-size: 13px; color: var(--muted); }
+  .swatch {
+    width: 10px; height: 10px; border-radius: 3px;
+    display: inline-block;
+  }
+  .swatch.human { background: var(--human); }
+  .swatch.bot { background: var(--bot); }
+  .swatch.shared { background: linear-gradient(90deg, var(--human), var(--bot)); }
+
+  .rail {
+    position: relative;
+    display: grid;
+    gap: 18px;
+  }
+  .rail::before {
+    content: "";
+    position: absolute;
+    left: 27px;
+    top: 18px;
+    bottom: 18px;
+    width: 2px;
+    background: linear-gradient(180deg, var(--accent), var(--accent-2), var(--human));
+    opacity: 0.35;
+  }
+  @media (max-width: 720px) {
+    .rail::before { left: 19px; }
+  }
+
+  .stage {
+    position: relative;
+    display: grid;
+    grid-template-columns: 56px 1fr;
+    gap: 16px;
+    align-items: start;
+  }
+  @media (max-width: 720px) {
+    .stage { grid-template-columns: 40px 1fr; gap: 12px; }
+  }
+  .num {
+    width: 56px; height: 56px;
+    border-radius: 18px;
+    display: grid;
+    place-items: center;
+    font-family: "JetBrains Mono", monospace;
+    font-weight: 500;
+    font-size: 14px;
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    color: var(--accent);
+    box-shadow: var(--shadow);
+    z-index: 1;
+  }
+  @media (max-width: 720px) {
+    .num { width: 40px; height: 40px; border-radius: 12px; font-size: 12px; }
+  }
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 22px 24px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+  }
+  .card-top {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 10px;
+    align-items: flex-start;
+    margin-bottom: 12px;
+  }
+  .card h2 {
+    margin: 0;
+    font-size: 1.2rem;
+    letter-spacing: -0.02em;
+  }
+  .who {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .tag {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 5px 9px;
+    border-radius: 999px;
+  }
+  .tag.human {
+    color: #ffd6ea;
+    background: rgba(244,114,182,0.15);
+    border: 1px solid rgba(244,114,182,0.35);
+  }
+  .tag.bot {
+    color: #d6e2ff;
+    background: rgba(124,156,255,0.15);
+    border: 1px solid rgba(124,156,255,0.35);
+  }
+  .tag.gate {
+    color: #fef3c7;
+    background: rgba(251,191,36,0.12);
+    border: 1px solid rgba(251,191,36,0.35);
+  }
+  .card p { margin: 0 0 12px; color: var(--muted); }
+  .steps {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 8px;
+  }
+  .steps li {
+    display: grid;
+    grid-template-columns: 18px 1fr;
+    gap: 10px;
+    align-items: start;
+    font-size: 14px;
+    color: var(--text);
+  }
+  .steps li::before {
+    content: "";
+    width: 8px; height: 8px;
+    margin-top: 6px;
+    border-radius: 50%;
+    background: var(--accent-2);
+    box-shadow: 0 0 0 3px rgba(94,234,212,0.15);
+  }
+  .callout {
+    margin-top: 14px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: rgba(124,156,255,0.08);
+    border: 1px solid rgba(124,156,255,0.2);
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .callout strong { color: var(--text); }
+  .callout.warn {
+    background: rgba(251,191,36,0.08);
+    border-color: rgba(251,191,36,0.25);
+  }
+  .callout.ok {
+    background: rgba(52,211,153,0.08);
+    border-color: rgba(52,211,153,0.25);
+  }
+
+  .mini-flow {
+    margin: 36px 0;
+    padding: 24px;
+    border-radius: 24px;
+    border: 1px solid var(--line);
+    background: var(--bg-elev);
+    overflow-x: auto;
+  }
+  .mini-flow h2 {
+    margin: 0 0 16px;
+    font-size: 1rem;
+    color: var(--muted);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .chips {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: max-content;
+    padding-bottom: 4px;
+  }
+  .chip {
+    padding: 10px 14px;
+    border-radius: 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .arrow {
+    color: var(--faint);
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .rules {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 12px;
+    margin-top: 36px;
+  }
+  .rule {
+    padding: 18px;
+    border-radius: 16px;
+    border: 1px solid var(--line);
+    background: var(--bg-card);
+  }
+  .rule h3 {
+    margin: 0 0 8px;
+    font-size: 14px;
+  }
+  .rule p, .rule ul {
+    margin: 0;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .rule ul { padding-left: 18px; }
+  .rule li { margin: 4px 0; }
+
+  footer {
+    margin-top: 48px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+    color: var(--faint);
+    font-size: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  code {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.9em;
+    color: var(--accent-2);
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="hero">
+      <div class="eyebrow"><span class="dot"></span> Seru Company · Operating playbook</div>
+      <h1>Sales → Implementation journey</h1>
+      <p class="lede">
+        One path from a Bangalore lead to a live tenant. Humans close and decide;
+        Seru bots prepare data, drafts, costs, and go-live — never promise a custom build,
+        only a tenant on the live stack.
+      </p>
+      <div class="meta-row">
+        <span class="pill"><strong>Proof</strong> live VP Culture Club + console modules</span>
+        <span class="pill"><strong>Go-live floor</strong> ~1 day ops</span>
+        <span class="pill"><strong>Promo</strong> month-1 SaaS free · cap 20 / 60 days</span>
+      </div>
+    </header>
+
+    <section class="legend" aria-label="Who does what">
+      <div class="legend-card">
+        <h3><span class="swatch human"></span> Humans</h3>
+        <p>Owner / sales calls, approve-send, commercial yes/no, go-live sign-off, money decisions.</p>
+      </div>
+      <div class="legend-card">
+        <h3><span class="swatch bot"></span> Seru bots</h3>
+        <p>Data, drafts, pricing truth, cost stamps, digests, go-live checklist, tenant seed helpers.</p>
+      </div>
+      <div class="legend-card">
+        <h3><span class="swatch shared"></span> Shared rule</h3>
+        <p>Soft card only. No GMV cut. Venue Razorpay → their settlement. Digests only on real delta.</p>
+      </div>
+    </section>
+
+    <section class="mini-flow" aria-label="At a glance">
+      <h2>At a glance</h2>
+      <div class="chips">
+        <span class="chip">1 · Lead</span><span class="arrow">→</span>
+        <span class="chip">2 · Queue</span><span class="arrow">→</span>
+        <span class="chip">3 · Pitch</span><span class="arrow">→</span>
+        <span class="chip">4 · Won</span><span class="arrow">→</span>
+        <span class="chip">5 · Seed</span><span class="arrow">→</span>
+        <span class="chip">6 · Go-live</span><span class="arrow">→</span>
+        <span class="chip">7 · Live</span>
+      </div>
+    </section>
+
+    <section class="rail" aria-label="Stages">
+      <article class="stage">
+        <div class="num">01</div>
+        <div class="card">
+          <div class="card-top">
+            <h2>Lead intake</h2>
+            <div class="who">
+              <span class="tag bot">Data Guy</span>
+              <span class="tag human">Owner review</span>
+            </div>
+          </div>
+          <p>Verified Bangalore venues only — never invented contacts.</p>
+          <ul class="steps">
+            <li>Score fit, commerce signal, primary/secondary bundle.</li>
+            <li>Stamp soft-card SKU + list INR + founding flag + go-live fee.</li>
+            <li>Export dashboard CSV (quoted fields) for import.</li>
+          </ul>
+          <div class="callout"><strong>Hand-off:</strong> <code>bangalore-dashboard-import.csv</code> → Salesman.</div>
+        </div>
+      </article>
+
+      <article class="stage">
+        <div class="num">02</div>
+        <div class="card">
+          <div class="card-top">
+            <h2>Sales queue & drafts</h2>
+            <div class="who">
+              <span class="tag bot">Salesman</span>
+              <span class="tag bot">Developer</span>
+              <span class="tag human">Owner Mac</span>
+            </div>
+          </div>
+          <p>Utilities sales dashboard on the owner Mac (LAN: <code>http://192.168.1.8:5174</code>).</p>
+          <ul class="steps">
+            <li>Import CSV → pipeline with soft-card prices from <code>/api/prices</code>.</li>
+            <li>Drafts get free-month line + SKU; founding left off until Ops flips gate.</li>
+            <li>No real approve-send until mail is connected.</li>
+          </ul>
+          <div class="callout warn"><strong>Gate:</strong> drafts OK · sends blocked until mail greenlight.</div>
+        </div>
+      </article>
+
+      <article class="stage">
+        <div class="num">03</div>
+        <div class="card">
+          <div class="card-top">
+            <h2>Pitch & pre-sales</h2>
+            <div class="who">
+              <span class="tag human">You / sales call</span>
+              <span class="tag bot">Salesman</span>
+              <span class="tag bot">Finance Guy</span>
+            </div>
+          </div>
+          <p>Human conversation; bots keep the commercial truth consistent.</p>
+          <ul class="steps">
+            <li>Demo = live VP Culture Club + console modules on/off — not a static mock.</li>
+            <li>Promise: tenant cut from live stack — never custom build.</li>
+            <li>Quote soft card only (Complete ₹4,999 · singles ₹2,499 · Tickets ₹1,999 · add-ons ₹999).</li>
+            <li>Pitch: “First month SaaS on us” (SKU only) · go-live ₹9,999 on singles · Complete annual waives go-live.</li>
+          </ul>
+          <div class="callout ok"><strong>Promo lock:</strong> free month-1 SaaS · cap first 20 Bangalore go-lives / 60 days · no free+founding stack · founding (when unlocked) starts month 2.</div>
+        </div>
+      </article>
+
+      <article class="stage">
+        <div class="num">04</div>
+        <div class="card">
+          <div class="card-top">
+            <h2>Won → handoff</h2>
+            <div class="who">
+              <span class="tag human">Owner marks won</span>
+              <span class="tag bot">Salesman</span>
+              <span class="tag bot">ImpOps</span>
+              <span class="tag bot">Finance</span>
+            </div>
+          </div>
+          <p>Mark won in the dashboard — seeds the go-live packet.</p>
+          <ul class="steps">
+            <li>Capture: bundle, domain, <code>razorpay_ready</code>, SKU, list INR, go-live fee, month-1 waived.</li>
+            <li>Finance checks soft-card + go-live / founding warnings.</li>
+            <li>ImpOps ticks promo count (20 / 60-day) and opens go-live checklist.</li>
+          </ul>
+          <div class="callout"><strong>Rule:</strong> won without seed fields = incomplete handoff. Don’t start go-live blind.</div>
+        </div>
+      </article>
+
+      <article class="stage">
+        <div class="num">05</div>
+        <div class="card">
+          <div class="card-top">
+            <h2>Tenant seed</h2>
+            <div class="who">
+              <span class="tag bot">ImpOps</span>
+              <span class="tag human">Console (you)</span>
+              <span class="tag gate">Dev = utilities only</span>
+            </div>
+          </div>
+          <p>Create the client on the live Seru stack — shared SPA/API, hostname → tenant.</p>
+          <ul class="steps">
+            <li>Create client → package / modules / UI pack.</li>
+            <li>Site Studio + Media Manager for brand surface.</li>
+            <li>Domain / DNS path (Cloudflare Free OK).</li>
+          </ul>
+          <div class="callout warn"><strong>Code lock:</strong> only Seru Developer writes code, and only in <code>seru-team-utilities</code> — not <code>seru-app</code>.</div>
+        </div>
+      </article>
+
+      <article class="stage">
+        <div class="num">06</div>
+        <div class="card">
+          <div class="card-top">
+            <h2>Go-live (~1 day)</h2>
+            <div class="who">
+              <span class="tag bot">ImpOps</span>
+              <span class="tag human">Venue staff + you</span>
+            </div>
+          </div>
+          <p>Ops floor is about one day — same checklist for every tenant.</p>
+          <ul class="steps">
+            <li>Venue Razorpay keys + settlement story (their money, no GMV cut).</li>
+            <li>Staff logins for <code>/admin</code>; Seru platform ops use <code>/console</code>.</li>
+            <li>Smoke each sold module (events / classes / tickets / finance / …).</li>
+            <li>Public site + member portal check; mark live.</li>
+          </ul>
+          <div class="callout ok"><strong>Fees:</strong> go-live ₹9,999 on first single module · waived on Complete annual · month-1 SaaS ₹0 under promo.</div>
+        </div>
+      </article>
+
+      <article class="stage">
+        <div class="num">07</div>
+        <div class="card">
+          <div class="card-top">
+            <h2>Live · bill · watch</h2>
+            <div class="who">
+              <span class="tag bot">Finance</span>
+              <span class="tag bot">Ops Exec</span>
+              <span class="tag bot">ImpOps digests</span>
+              <span class="tag human">Owner</span>
+            </div>
+          </div>
+          <p>Running tenant on shared infra — cost is mostly fixed, not per-client Run/SQL.</p>
+          <ul class="steps">
+            <li>Dashboard: mark paid / suspend as needed.</li>
+            <li>Ops Exec: unit cost + founding gate (<code>/api/ops</code>) after LB cutover or ≥2 live tenants.</li>
+            <li>ImpOps weekday digests: Locked / Blocked / Next — only when something changed.</li>
+          </ul>
+          <div class="callout"><strong>Infra truth:</strong> free month-1 doesn’t move GCP much; risk is go-live labor + deferred SaaS, not servers.</div>
+        </div>
+      </article>
+    </section>
+
+    <section class="rules" aria-label="Commercial cheat sheet">
+      <div class="rule">
+        <h3>Soft card (quote only this)</h3>
+        <ul>
+          <li>Complete — ₹4,999/mo</li>
+          <li>Events or Classes + Site — ₹2,499</li>
+          <li>Tickets &amp; Scan — ₹1,999</li>
+          <li>Finance / Loyalty / CMS — ₹999 each</li>
+          <li>Go-live — ₹9,999 (singles) · waived Complete annual</li>
+        </ul>
+      </div>
+      <div class="rule">
+        <h3>Founding (closed for now)</h3>
+        <p>₹3,999×12 Complete or ₹1,499×3 singles — flagged until LB cutover or ≥2 live tenants. When unlocked, rate starts <strong>month 2</strong> (after free month-1).</p>
+      </div>
+      <div class="rule">
+        <h3>Who to ping</h3>
+        <ul>
+          <li>Leads → Data Guy</li>
+          <li>Pitch / drafts → Salesman + Finance</li>
+          <li>Dashboard bugs → Developer (utilities)</li>
+          <li>Won → ImpOps go-live</li>
+          <li>₹/tenant → Ops Exec</li>
+        </ul>
+      </div>
+      <div class="rule">
+        <h3>Example path (Abhinava-shaped)</h3>
+        <p>Lead stamped Complete ₹4,999 → draft with free month-1 → call on live demo → won + seed → ImpOps 1-day go-live (go-live fee waived on Complete annual) → live · promo tick 1/20.</p>
+      </div>
+    </section>
+
+    <footer>
+      <span>Seru Company · humans + Seru bots</span>
+      <span>Locked commercial truth · Sep 2026 · soft card + month-1 free promo</span>
+    </footer>
+  </div>
+</body>
+</html>
